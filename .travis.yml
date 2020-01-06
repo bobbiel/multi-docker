@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t bobbiel/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true bobbiel/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t bobbiel/multi-client ./client
+  - docker build -t bobbiel/multi-nginx ./nginx
+  - docker build -t bobbiel/multi-server ./server
+  - docker build -t bobbiel/multi-worker ./worker
+
+# log into the Docker CLI
+  - echo "$Docker_password" | docker login -u "$Docker_ID"  --password-stdin
+# Take those images and push them to docker hub
+  - docker push bobbiel/multi-client
+  - docker push bobbiel/multi-nginx
+  - docker push bobbiel/multi-server
+  - docker push bobbiel/multi-worker 
